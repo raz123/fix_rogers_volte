@@ -37,12 +37,3 @@ for f in $CC_DIR/carrierconfig-*.xml; do
   grep -q '</bundle>' "$f" || continue
   sed -i 's|</bundle>|<boolean name="carrier_volte_available_bool" value="true" />\n<boolean name="carrier_volte_provisioning_required_bool" value="false" />\n<boolean name="carrier_ims_gba_required_bool" value="false" />\n</bundle>|' "$f"
 done
-
-# Force LTE-only mode (disable 5G) to prevent modem crash on North American networks.
-# The SM8250 modem has a known bug: crashes during 5G/4G handover on NA carriers.
-# AOSP kernel patches this as SSR (10-30s outage). MIUI has workarounds; AOSP doesn't.
-#
-# MUST set force_nr_dc BEFORE preferred_network_mode — it overrides at vendor level.
-# resetprop required for persist.* props (setprop can't modify at runtime).
-resetprop persist.vendor.radio.force_nr_dc 0
-settings put global preferred_network_mode 9,9

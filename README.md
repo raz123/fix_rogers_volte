@@ -4,18 +4,17 @@ KernelSU module for Rogers (MCC 302/MNC 720) on AOSP ROMs.
 
 ## What it does
 
-1. **Enables VoLTE** — patches carrier config XML with slot-aware safety
-2. **Forces LTE-only mode** — disables 5G to prevent SM8250 modem crash on North American networks
+- **Enables VoLTE** — patches the carrier config XML with slot-aware safety: skips patching when the slot-1 SIM isn't active, preventing RIL cross-talk on Qualcomm dual-SIM devices.
 
 ## Root cause
 
-The Qualcomm SM8250 modem has a known bug: it crashes during 5G/4G handover on North American carriers (Rogers, T-Mobile). AOSP kernels patch this as SSR (subsystem restart, 10-30s outage) instead of a full reboot. MIUI has workarounds; AOSP doesn't.
+AOSP ROMs ship without a Rogers carrier config that enables VoLTE, so the IMS stack stays off even though the modem supports it. This module patches the device's carrier config to flip VoLTE on, with `carrier_volte_provisioning_required_bool=false` and `carrier_ims_gba_required_bool=false` so registration succeeds without carrier provisioning or GBA.
 
-**The fix:** Force LTE-only mode (`preferred_network_mode=9,9`) and disable NR dual connectivity (`persist.vendor.radio.force_nr_dc=0`) via `resetprop`.
+Band control (LTE/NR band selection — e.g. avoiding the SM8250's crash-prone 66↔7 handover) is handled by the companion [Band Controller](https://github.com/raz123/bandctl) module.
 
 ## Installation
 
-1. Download `fix_rogers_volte-v1.2.zip` from [Releases](../../releases)
+1. Download the latest `fix_rogers_volte-*.zip` from [Releases](../../releases)
 2. KernelSU app → Modules → Install from storage
 3. Reboot
 
@@ -26,10 +25,6 @@ The Qualcomm SM8250 modem has a known bug: it crashes during 5G/4G handover on N
 - **KernelSU:** 4.1.0+
 
 ## Changelog
-
-### v1.2
-- Add persistent LTE-only mode (disable 5G) to prevent SM8250 modem crash
-- Use `resetprop` for `persist.vendor.radio.force_nr_dc=0` (set before `preferred_network_mode`)
 
 ### v1.1
 - Slot-aware patching — skips when slot 1 is empty
